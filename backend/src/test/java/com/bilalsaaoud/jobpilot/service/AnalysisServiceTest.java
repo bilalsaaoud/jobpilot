@@ -12,13 +12,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AnalysisServiceTest {
 
     private AnalysisService newService() {
-        TechDictionary dict = new TechDictionary();
         CandidateProfile profile = new CandidateProfile();
         KeywordAiClient keyword = new KeywordAiClient();
         OpenAiAiClient openai = new OpenAiAiClient("", "gpt-4o-mini",
                 "https://api.openai.com/v1", keyword);
-        return new AnalysisService(dict, profile, openai, keyword,
-                new OfferParser(), new ProjectIdeas());
+        DomainRegistry domains = new DomainRegistry(new TechDictionary());
+        return new AnalysisService(profile, openai, keyword,
+                new OfferParser(), new ProjectIdeas(), domains);
     }
 
     @Test

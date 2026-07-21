@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { JobService } from '../job.service';
 import { AnalysisResult, AnalyzeRequest } from '../models';
 import { searchCompanies } from '../companies';
-import { ROLES, CITIES, searchList } from '../suggest-data';
+import { CITIES, searchList } from '../suggest-data';
+import { DOMAINS, getDomain } from '../domains';
 import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.component';
 
 @Component({
@@ -15,8 +16,31 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
   <div class="grid">
     <section class="card fade-up">
       <h2>Analyser une offre</h2>
-      <p class="muted">Colle le texte d'une annonce. JobPilot détecte l'entreprise et le poste,
-        calcule ta compatibilité et rédige ton mot de motivation.</p>
+      <p class="muted">Choisis ton domaine, colle une annonce : JobPilot détecte l'entreprise et le poste,
+        calcule ta compatibilité et rédige ton mot de motivation. Fonctionne pour tous les métiers.</p>
+
+      <div class="domains">
+        @for (d of domains; track d.id) {
+          <button class="dom" [class.on]="domain()===d.id" (click)="setDomain(d.id)">
+            <span class="e">{{ d.emoji }}</span> {{ d.label }}</button>
+        }
+      </div>
+
+      <div class="skills-box">
+        <div class="sk-head">
+          <span>Mes compétences <small>({{ userSkills().length }})</small></span>
+          <button class="reset" (click)="resetSkills()">Réinitialiser</button>
+        </div>
+        <div class="sk-tags">
+          @for (s of userSkills(); track s) {
+            <span class="sk">{{ s }} <b (click)="removeSkill(s)">×</b></span>
+          }
+          @if (!userSkills().length) { <span class="muted">Ajoute tes compétences pour un score personnalisé ↓</span> }
+        </div>
+        <app-autocomplete label="Ajouter une compétence" fieldId="sk" [value]="skillDraft"
+          [search]="skillSearch" [emitEnter]="true"
+          (valueChange)="skillDraft=$event" (picked)="addSkill($event.label)" (submitted)="addSkill($event)"></app-autocomplete>
+      </div>
 
       <div class="row">
         <app-autocomplete class="cell" label="Entreprise" fieldId="cp" [detected]="detected('company')"
@@ -107,6 +131,23 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
     .row { display:flex; gap:12px; margin-bottom:12px; }
     @media (max-width: 520px){ .row{ flex-direction:column; } }
     .cell { flex:1; min-width:0; }
+    .domains { display:flex; flex-wrap:wrap; gap:7px; margin:14px 0 16px; }
+    .dom { background:rgba(9,12,26,.5); border:1px solid var(--border-strong); color:var(--muted);
+      padding:7px 12px; border-radius:20px; cursor:pointer; font-size:12.5px; font-weight:600; font-family:inherit; transition:.15s; }
+    .dom:hover { color:#fff; border-color:var(--blue); }
+    .dom.on { background:var(--grad); color:#fff; border-color:transparent; box-shadow:0 8px 20px -8px rgba(123,92,255,.6); }
+    .dom .e { margin-right:2px; }
+    .skills-box { background:rgba(9,12,26,.4); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:16px; }
+    .sk-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:13px; color:#cdd4f4; font-weight:600; }
+    .sk-head small { color:var(--muted-2); font-weight:400; }
+    .reset { background:transparent; border:1px solid var(--border-strong); color:var(--muted); border-radius:8px;
+      padding:4px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; }
+    .reset:hover { color:#fff; }
+    .sk-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+    .sk { background:rgba(79,227,163,.13); color:var(--green); border:1px solid rgba(79,227,163,.3);
+      padding:4px 10px; border-radius:16px; font-size:12px; font-weight:600; text-transform:capitalize; }
+    .sk b { cursor:pointer; color:#8fe9c0; margin-left:3px; font-weight:800; }
+    .sk b:hover { color:#fff; }
     .field { position:relative; }
     .field input { width:100%; padding:15px 13px 7px; border:1px solid var(--border-strong); border-radius:11px;
       background:rgba(9,12,26,.6); color:var(--text); font-size:14px; font-family:inherit; transition:border-color .2s, box-shadow .2s; }
@@ -167,11 +208,36 @@ export class AnalyzerComponent {
   animScore = signal(0);
   copied = signal<string>('');
 
+  domains = DOMAINS;
+  domain = signal<string>('informatique');
+  userSkills = signal<string[]>(getDomain('informatique').profileSkills);
+  skillDraft = '';
+
   // fonctions de recherche (arrow = 'this' correctement lié)
   companySearch = (q: string): Suggestion[] =>
     searchCompanies(q).map(c => ({ label: c.name, meta: `${c.sector} · ${c.city}`, data: c }));
-  roleSearch = (q: string): Suggestion[] => searchList(ROLES, q).map(x => ({ label: x }));
+  roleSearch = (q: string): Suggestion[] =>
+    searchList(getDomain(this.domain()).roles, q).map(x => ({ label: x }));
   locationSearch = (q: string): Suggestion[] => searchList(CITIES, q).map(x => ({ label: x }));
+  skillSearch = (q: string): Suggestion[] => {
+    const have = new Set(this.userSkills().map(s => s.toLowerCase()));
+    return searchList(getDomain(this.domain()).skills.filter(s => !have.has(s.toLowerCase())), q)
+      .map(x => ({ label: x }));
+  };
+
+  setDomain(id: string) {
+    this.domain.set(id);
+    this.userSkills.set([...getDomain(id).profileSkills]);
+    this.req.role = '';
+  }
+  resetSkills() { this.userSkills.set([...getDomain(this.domain()).profileSkills]); }
+  addSkill(s: string) {
+    const v = s.trim(); if (!v) return;
+    if (!this.userSkills().some(x => x.toLowerCase() === v.toLowerCase()))
+      this.userSkills.set([...this.userSkills(), v]);
+    this.skillDraft = '';
+  }
+  removeSkill(s: string) { this.userSkills.set(this.userSkills().filter(x => x !== s)); }
 
   constructor(private api: JobService) {
     effect(() => {
@@ -202,7 +268,7 @@ export class AnalyzerComponent {
   run(save: boolean) {
     if (!this.req.offerText.trim()) { alert("Colle d'abord le texte d'une offre."); return; }
     this.loading.set(true);
-    this.api.analyze({ ...this.req, save }).subscribe({
+    this.api.analyze({ ...this.req, save, domain: this.domain(), userSkills: this.userSkills() }).subscribe({
       next: r => {
         this.result.set(r); this.loading.set(false);
         if (!this.req.company && r.detectedCompany) this.req.company = r.detectedCompany;

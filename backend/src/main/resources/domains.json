@@ -1,0 +1,62 @@
+[
+ {
+  "id": "informatique", "label": "Informatique / Dev", "emoji": "💻",
+  "skills": ["java","spring boot","react","angular","vue","node.js","typescript","javascript","python","php","symfony","c#",".net","sql","postgresql","mysql","mongodb","docker","kubernetes","git","ci/cd","aws","linux","agile","scrum","rest api","html","css","tests unitaires","kafka"],
+  "roles": ["Développeur Full-stack","Développeur Back-end","Développeur Front-end","Développeur Java","Développeur Web","Ingénieur DevOps","Data Engineer","Développeur Mobile","Ingénieur logiciel"],
+  "profileSkills": ["java","spring boot","react","node.js","typescript","javascript","docker","git","ci/cd","sql","postgresql","agile","rest api","html","css"]
+ },
+ {
+  "id": "marketing", "label": "Marketing / Communication", "emoji": "📣",
+  "skills": ["seo","sea","google ads","community management","réseaux sociaux","content marketing","copywriting","emailing","marketing automation","google analytics","brand","relations presse","événementiel","stratégie digitale","wordpress","canva","adobe","référencement","growth hacking","crm","hubspot","facebook ads","influence","newsletter"],
+  "roles": ["Chargé de communication","Community manager","Chef de projet marketing","Traffic manager","Chargé de marketing digital","Content manager","Assistant communication"],
+  "profileSkills": ["seo","community management","réseaux sociaux","content marketing","google analytics","canva","emailing"]
+ },
+ {
+  "id": "commerce", "label": "Commerce / Vente", "emoji": "🤝",
+  "skills": ["prospection","négociation","relation client","closing","crm","salesforce","développement commercial","b2b","b2c","téléprospection","fidélisation","account management","business development","vente","reporting commercial","kpi","argumentaire"],
+  "roles": ["Business developer","Commercial","Chargé d'affaires","Account manager","Chargé de clientèle","Assistant commercial","Ingénieur d'affaires"],
+  "profileSkills": ["prospection","négociation","relation client","crm","b2b","développement commercial"]
+ },
+ {
+  "id": "finance", "label": "Finance / Comptabilité", "emoji": "💰",
+  "skills": ["comptabilité générale","comptabilité analytique","fiscalité","tva","contrôle de gestion","reporting","consolidation","sap","excel","saisie comptable","rapprochement bancaire","bilan","clôture","audit","trésorerie","paie","sage","ifrs"],
+  "roles": ["Assistant comptable","Comptable","Contrôleur de gestion","Analyste financier","Auditeur junior","Gestionnaire paie","Chargé de recouvrement"],
+  "profileSkills": ["comptabilité générale","tva","excel","saisie comptable","reporting","contrôle de gestion"]
+ },
+ {
+  "id": "rh", "label": "Ressources Humaines", "emoji": "👥",
+  "skills": ["recrutement","sourcing","paie","sirh","gestion des talents","formation","droit du travail","entretien","marque employeur","onboarding","gpec","administration du personnel","linkedin recruiter","relations sociales"],
+  "roles": ["Chargé de recrutement","Gestionnaire RH","Assistant RH","Chargé de formation","Talent acquisition","HR business partner","Gestionnaire paie"],
+  "profileSkills": ["recrutement","sourcing","formation","onboarding","entretien","administration du personnel"]
+ },
+ {
+  "id": "design", "label": "Design / UX", "emoji": "🎨",
+  "skills": ["figma","ux design","ui design","prototypage","wireframe","design system","adobe xd","photoshop","illustrator","accessibilité","user research","maquettage","sketch","motion design","branding","direction artistique"],
+  "roles": ["UX designer","UI designer","Product designer","Graphiste","Directeur artistique","Motion designer","UX researcher"],
+  "profileSkills": ["figma","ux design","ui design","prototypage","wireframe","photoshop"]
+ },
+ {
+  "id": "data", "label": "Data / Analyse", "emoji": "📊",
+  "skills": ["sql","python","power bi","tableau","excel","machine learning","statistiques","data visualisation","etl","big data","dataiku","modélisation","dashboard","kpi","analyse de données","pandas"],
+  "roles": ["Data analyst","Data scientist","Business analyst","Analyste décisionnel","Chargé d'études statistiques","Data engineer"],
+  "profileSkills": ["sql","python","power bi","excel","data visualisation","statistiques"]
+ },
+ {
+  "id": "ingenierie", "label": "Ingénierie / Industrie", "emoji": "⚙️",
+  "skills": ["cao","solidworks","catia","autocad","gestion de projet","lean","amélioration continue","qualité","production","maintenance","automatisme","mécanique","électrotechnique","méthodes","industrialisation","r&d"],
+  "roles": ["Ingénieur méthodes","Ingénieur production","Ingénieur qualité","Chargé de projet industriel","Technicien bureau d'études","Ingénieur R&D"],
+  "profileSkills": ["cao","solidworks","gestion de projet","qualité","lean","production"]
+ },
+ {
+  "id": "logistique", "label": "Logistique / Supply", "emoji": "🚚",
+  "skills": ["supply chain","gestion de stock","approvisionnement","transport","wms","sap","achats","planification","flux","entreposage","import export","incoterms","logistique","prévision des ventes"],
+  "roles": ["Chargé de logistique","Approvisionneur","Gestionnaire de stock","Coordinateur supply chain","Chargé d'ordonnancement","Assistant achats"],
+  "profileSkills": ["supply chain","gestion de stock","approvisionnement","planification","logistique","achats"]
+ },
+ {
+  "id": "juridique", "label": "Juridique / Droit", "emoji": "⚖️",
+  "skills": ["droit des affaires","droit social","droit des contrats","rgpd","compliance","contentieux","rédaction juridique","veille juridique","propriété intellectuelle","droit commercial","corporate"],
+  "roles": ["Juriste","Assistant juridique","Juriste droit social","Paralegal","Chargé de conformité"],
+  "profileSkills": ["droit des affaires","droit des contrats","rgpd","rédaction juridique","veille juridique"]
+ }
+]

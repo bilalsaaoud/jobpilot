@@ -54,8 +54,11 @@ export class AutocompleteInputComponent {
   @Input() detected = false;
   /** Fonction de recherche fournie par le parent. */
   @Input() search: (q: string) => Suggestion[] = () => [];
+  /** Si true, appuyer sur Entrée sans sélection émet (submitted) et vide le champ (mode tags). */
+  @Input() emitEnter = false;
   @Output() valueChange = new EventEmitter<string>();
   @Output() picked = new EventEmitter<Suggestion>();
+  @Output() submitted = new EventEmitter<string>();
 
   items = signal<Suggestion[]>([]);
   open = signal(false);
@@ -70,10 +73,14 @@ export class AutocompleteInputComponent {
   }
   onKey(e: KeyboardEvent) {
     const list = this.items();
+    if (e.key === 'Enter') {
+      if (this.open() && this.idx() >= 0 && list.length) { e.preventDefault(); this.pick(list[this.idx()]); return; }
+      if (this.emitEnter && this.value.trim()) { e.preventDefault(); this.submitted.emit(this.value.trim());
+        this.value = ''; this.valueChange.emit(''); this.items.set([]); this.open.set(false); return; }
+    }
     if (!this.open() || !list.length) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); this.idx.set((this.idx() + 1) % list.length); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); this.idx.set((this.idx() - 1 + list.length) % list.length); }
-    else if (e.key === 'Enter') { if (this.idx() >= 0) { e.preventDefault(); this.pick(list[this.idx()]); } }
     else if (e.key === 'Escape') { this.open.set(false); }
   }
   pick(s: Suggestion) {

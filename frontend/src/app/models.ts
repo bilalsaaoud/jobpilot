@@ -18,6 +18,8 @@ export interface AnalyzeRequest {
   contractType?: string;
   sourceUrl?: string;
   save?: boolean;
+  domain?: string;
+  userSkills?: string[];
 }
 
 export interface AnalysisResult {

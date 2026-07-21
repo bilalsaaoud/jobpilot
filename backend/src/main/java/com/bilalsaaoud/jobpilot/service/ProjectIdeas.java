@@ -35,8 +35,8 @@ public class ProjectIdeas {
         List<Map<String, String>> out = new ArrayList<>();
         for (String skill : missing) {
             String idea = IDEAS.getOrDefault(skill,
-                "Ajoute " + skill + " à un de tes projets existants et documente-le dans le README : "
-                + "même une petite intégration montre que tu sais t'en servir.");
+                "Mets en avant " + skill + " : suis une courte formation (en ligne, gratuite) ou "
+                + "cite une expérience/un projet où tu l'as utilisé — même à petite échelle, ça compte.");
             out.add(Map.of("skill", skill, "idea", idea));
             if (out.size() >= limit) break;
         }

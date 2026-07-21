@@ -7,6 +7,7 @@ import com.bilalsaaoud.jobpilot.service.ai.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,36 +15,46 @@ import java.util.Set;
 @Service
 public class AnalysisService {
 
-    private final TechDictionary dictionary;
     private final CandidateProfile profile;
     private final OpenAiAiClient openAi;
     private final KeywordAiClient keyword;
     private final OfferParser parser;
     private final ProjectIdeas projectIdeas;
+    private final DomainRegistry domains;
 
-    public AnalysisService(TechDictionary dictionary, CandidateProfile profile,
-                           OpenAiAiClient openAi, KeywordAiClient keyword,
-                           OfferParser parser, ProjectIdeas projectIdeas) {
-        this.dictionary = dictionary;
+    public AnalysisService(CandidateProfile profile, OpenAiAiClient openAi, KeywordAiClient keyword,
+                           OfferParser parser, ProjectIdeas projectIdeas, DomainRegistry domains) {
         this.profile = profile;
         this.openAi = openAi;
         this.keyword = keyword;
         this.parser = parser;
         this.projectIdeas = projectIdeas;
+        this.domains = domains;
     }
 
     public AnalysisResult analyze(AnalyzeRequest req) {
-        // 1) detection automatique et remplissage des champs vides
+        String domain = (req.getDomain() == null || req.getDomain().isBlank()) ? "informatique" : req.getDomain();
+
+        // 1) detection automatique
         OfferParser.Detected det = parser.parse(req.getOfferText());
         if (isBlank(req.getCompany())) req.setCompany(det.company);
         if (isBlank(req.getRole())) req.setRole(det.role);
         if (isBlank(req.getLocation())) req.setLocation(det.location);
         if (isBlank(req.getContractType())) req.setContractType(det.contractType);
 
-        // 2) comparaison offre / profil
-        Set<String> offerSkills = dictionary.extract(req.getOfferText());
-        Set<String> mine = profile.skillSet();
-        Set<String> learning = profile.learningSet();
+        // 2) competences de l'offre pour le domaine choisi
+        Set<String> offerSkills = domains.extract(domain, req.getOfferText());
+
+        // 3) competences de l'utilisateur : celles fournies, sinon le profil par defaut du domaine
+        Set<String> mine = new LinkedHashSet<>();
+        if (req.getUserSkills() != null && !req.getUserSkills().isEmpty()) {
+            for (String s : req.getUserSkills()) if (s != null && !s.isBlank()) mine.add(s.toLowerCase());
+        } else if ("informatique".equals(domain)) {
+            mine.addAll(profile.skillSet());
+        } else {
+            mine.addAll(domains.defaultProfileSkills(domain));
+        }
+        Set<String> learning = "informatique".equals(domain) ? profile.learningSet() : Set.of();
 
         List<String> matched = new ArrayList<>();
         List<String> missing = new ArrayList<>();
@@ -53,12 +64,10 @@ public class AnalysisService {
             else if (learning.contains(s)) { missing.add(s); weighted += 0.4; }
             else { missing.add(s); }
         }
-
-        int score = offerSkills.isEmpty() ? 50
-                : (int) Math.round(100.0 * weighted / offerSkills.size());
+        int score = offerSkills.isEmpty() ? 50 : (int) Math.round(100.0 * weighted / offerSkills.size());
         score = Math.max(0, Math.min(100, score));
 
-        // 3) generation du contenu
+        // 4) generation
         AiClient engine = openAi.isEnabled() ? openAi : keyword;
         GenerationContext ctx = new GenerationContext(
                 profile, req.getCompany(), req.getRole(), score, matched, missing, req.getOfferText());

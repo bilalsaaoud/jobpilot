@@ -1,4 +1,5 @@
 import { AnalysisResult, AnalyzeRequest, JobApplication } from './models';
+import { getDomain, extractDomainSkills } from './domains';
 
 /** Profil du candidat (miroir de profile.json cote back). */
 const PROFILE = {
@@ -113,7 +114,7 @@ export function mockParse(text: string): Detected {
 function ideasFor(missing: string[], limit: number): { skill: string; idea: string }[] {
   return missing.slice(0, limit).map(skill => ({
     skill,
-    idea: IDEAS[skill] ?? `Ajoute ${skill} à un de tes projets existants et documente-le dans le README : même une petite intégration compte.`
+    idea: IDEAS[skill] ?? `Mets en avant ${skill} : suis une courte formation gratuite ou cite une expérience où tu l'as utilisé — même à petite échelle, ça compte.`
   }));
 }
 
@@ -121,9 +122,15 @@ export function mockAnalyze(req: AnalyzeRequest): AnalysisResult {
   const det = mockParse(req.offerText);
   const company0 = req.company?.trim() || det.company;
   const role0 = req.role?.trim() || det.role;
-  const offer = extract(req.offerText);
-  const mine = new Set(PROFILE.skills);
-  const learning = new Set(PROFILE.learning);
+  const domain = req.domain || 'informatique';
+  const offer = domain === 'informatique' ? extract(req.offerText)
+                                           : extractDomainSkills(domain, req.offerText).map(x => x.toLowerCase());
+  let mineArr: string[];
+  if (req.userSkills && req.userSkills.length) mineArr = req.userSkills.map(x => x.toLowerCase());
+  else if (domain === 'informatique') mineArr = PROFILE.skills;
+  else mineArr = getDomain(domain).profileSkills.map(x => x.toLowerCase());
+  const mine = new Set(mineArr);
+  const learning = new Set(domain === 'informatique' ? PROFILE.learning : []);
   const matched: string[] = [], missing: string[] = [];
   let weighted = 0;
   for (const s of offer) {
