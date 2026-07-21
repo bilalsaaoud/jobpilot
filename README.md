@@ -22,7 +22,11 @@ C'est un outil que j'utilise réellement — pas une démo jetable.
 
 ## Fonctionnalités
 
-- **Analyse d'offre** : extraction automatique des technologies citées, comparaison avec mon profil, **score de compatibilité 0-100** et verdict.
+- **Multi-domaines** : 10 métiers couverts (dév, marketing, commerce, finance, RH, design, data, ingénierie, logistique, juridique). Chaque domaine a son propre vocabulaire de compétences et ses intitulés de poste.
+- **Compétences personnalisables** : l'utilisateur ajuste « Mes compétences » (avec autocomplétion) pour un score adapté à son profil.
+- **Autocomplétion** sur Entreprise (82 boîtes qui recrutent des alternants), Poste et Lieu, avec navigation clavier.
+- **Détection automatique** de l'entreprise, du poste, du lieu et du type de contrat à partir du texte de l'offre.
+- **Analyse d'offre** : extraction automatique des compétences citées, comparaison avec le profil, **score de compatibilité 0-100** et verdict.
 - **Génération de contenu** : mot de motivation et conseils d'adaptation du CV, personnalisés à l'offre.
 - **Moteur IA branchable** : utilise un **LLM** (compatible OpenAI) si une clé API est fournie, sinon bascule automatiquement sur un moteur d'analyse par mots-clés — l'application marche toujours, sans clé.
 - **Suivi des candidatures** : statuts (à envoyer → envoyée → relancée → entretien → offre / refusée), dates de relance, notes.
