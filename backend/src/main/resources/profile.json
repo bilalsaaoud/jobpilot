@@ -1,0 +1,21 @@
+{
+  "fullName": "Bilal Saaoud",
+  "title": "Developpeur Full-stack en alternance",
+  "email": "bilal123saaoud@gmail.com",
+  "phone": "+33 7 69 40 89 43",
+  "school": "ETNA - Ecole des Technologies Numeriques Avancees (groupe IONIS)",
+  "diploma": "Bachelor Developpeur Full-stack",
+  "availability": "octobre 2026",
+  "location": "Ile-de-France",
+  "portfolio": "bilalsaaoud.github.io",
+  "rhythmPitch": "Rythme ETNA : present en entreprise ~96% du temps (un vendredi ecole toutes les 3 semaines).",
+  "skills": [
+    "java", "spring boot", "jpa", "hibernate", "rest", "junit",
+    "javascript", "typescript", "react", "node.js", "express",
+    "python", "asp.net core", ".net", "html", "css", "tailwind",
+    "sql", "postgresql", "mysql", "sql server",
+    "docker", "git", "github actions", "ci/cd", "linux",
+    "agile", "scrum", "design patterns", "maven"
+  ],
+  "learning": [ "angular", "kafka", "kubernetes", "aws" ]
+}

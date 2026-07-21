@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: jobpilot
+  # Profil par defaut : H2 en memoire (aucune installation requise, utilise en CI et pour tester)
+  datasource:
+    url: jdbc:h2:mem:jobpilot;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Integration IA : si OPENAI_API_KEY est defini, JobPilot utilise le LLM ;
+# sinon il bascule automatiquement sur le moteur d'analyse par mots-cles (aucune cle requise).
+jobpilot:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model: ${OPENAI_MODEL:gpt-4o-mini}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}

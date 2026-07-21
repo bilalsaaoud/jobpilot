@@ -1,0 +1,11 @@
+# Profil "postgres" active par docker-compose (SPRING_PROFILES_ACTIVE=postgres)
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://db:5432/jobpilot}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USER:jobpilot}
+    password: ${DB_PASSWORD:jobpilot}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update

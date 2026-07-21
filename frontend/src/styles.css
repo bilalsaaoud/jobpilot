@@ -1,0 +1,13 @@
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; }
+body {
+  background: radial-gradient(1200px 600px at 20% -10%, #1a2145 0%, transparent 60%),
+              radial-gradient(1000px 500px at 100% 0%, #241a45 0%, transparent 55%), #090c1a;
+  color: #e8ecff;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+.card { background:linear-gradient(160deg,#141a33,#10142700); background-color:#111530;
+  border:1px solid #222a48; border-radius:16px; padding:22px; }
+h2 { margin:0 0 6px; font-size:18px; }
+.muted { color:#8b93b8; font-size:13px; line-height:1.5; }
