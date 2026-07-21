@@ -7,6 +7,7 @@ import com.bilalsaaoud.jobpilot.service.JobApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class JobApplicationController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Mettre a jour le statut / la relance / les notes")
-    public JobApplication update(@PathVariable Long id, @RequestBody StatusUpdateRequest req) {
+    public JobApplication update(@PathVariable Long id, @Valid @RequestBody StatusUpdateRequest req) {
         return service.updateStatus(id, req);
     }
 

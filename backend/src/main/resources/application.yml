@@ -20,6 +20,14 @@ spring:
 
 server:
   port: 8080
+  # Durcissement : limite la taille des requêtes et masque la version du serveur
+  max-http-request-header-size: 16KB
+  tomcat:
+    max-swallow-size: 2MB
+    max-http-form-post-size: 2MB
+  error:
+    include-stacktrace: never
+    include-message: always
 
 springdoc:
   swagger-ui:

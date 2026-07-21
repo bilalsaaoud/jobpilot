@@ -117,6 +117,10 @@ Documentation interactive complète : `/swagger-ui.html`.
 
 ---
 
+## Sécurité
+
+Souvent oubliée dans les projets étudiants, la sécurité est ici intégrée dès la conception (approche OWASP) : validation stricte des entrées, **rate limiting** par IP (429), **en-têtes de sécurité HTTP** (anti-clickjacking, anti-XSS, anti-MIME-sniffing), requêtes SQL paramétrées (anti-injection), CORS restreint et aucun secret en dur. Détails dans [SECURITY.md](SECURITY.md).
+
 ## Tests
 
 ```bash
