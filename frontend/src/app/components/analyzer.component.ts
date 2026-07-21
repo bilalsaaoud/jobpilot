@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JobService } from '../job.service';
 import { AnalysisResult, AnalyzeRequest } from '../models';
+import { Company, searchCompanies } from '../companies';
 
 @Component({
   selector: 'app-analyzer',
@@ -16,9 +17,22 @@ import { AnalysisResult, AnalyzeRequest } from '../models';
         calcule ta compatibilité et rédige ton mot de motivation.</p>
 
       <div class="row">
-        <div class="field">
-          <input [(ngModel)]="req.company" placeholder=" " id="cp">
+        <div class="field ac">
+          <input [(ngModel)]="req.company" placeholder=" " id="cp" autocomplete="off"
+                 (input)="onCompanyInput()" (keydown)="onCompanyKey($event)"
+                 (focus)="onCompanyInput()" (blur)="closeSuggestionsSoon()">
           <label for="cp">Entreprise @if (detected('company')) { <span class="auto">✨ détecté</span> }</label>
+          @if (suggestions().length && showSuggest()) {
+            <ul class="suggest">
+              @for (c of suggestions(); track c.name; let i = $index) {
+                <li [class.active]="i===activeIdx()" (mousedown)="pickCompany(c)"
+                    (mouseenter)="activeIdx.set(i)">
+                  <span class="s-name">{{ c.name }}</span>
+                  <span class="s-meta">{{ c.sector }} · {{ c.city }}</span>
+                </li>
+              }
+            </ul>
+          }
         </div>
         <div class="field">
           <input [(ngModel)]="req.role" placeholder=" " id="rl">
@@ -117,6 +131,14 @@ import { AnalysisResult, AnalyzeRequest } from '../models';
     .field input:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,168,255,.15); }
     .field input:focus + label, .field input:not(:placeholder-shown) + label { top:4px; font-size:10.5px; color:var(--blue); }
     .auto { color:var(--violet); font-weight:700; }
+    .ac { position:relative; }
+    .suggest { position:absolute; z-index:20; top:calc(100% + 4px); left:0; right:0; margin:0; padding:5px;
+      list-style:none; background:#0f1430; border:1px solid var(--border-strong); border-radius:12px;
+      box-shadow:0 22px 50px -18px rgba(0,0,0,.85); max-height:260px; overflow:auto; animation:popIn .16s ease both; }
+    .suggest li { display:flex; flex-direction:column; gap:1px; padding:8px 11px; border-radius:8px; cursor:pointer; }
+    .suggest li.active { background:var(--grad-soft); }
+    .s-name { font-size:13.5px; font-weight:600; color:#eaf0ff; }
+    .s-meta { font-size:11px; color:var(--muted-2); }
     textarea { width:100%; padding:13px; border:1px solid var(--border-strong); border-radius:12px;
       background:rgba(9,12,26,.6); color:var(--text); font-size:14px; font-family:inherit; resize:vertical; transition:border-color .2s, box-shadow .2s; }
     textarea:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,168,255,.13); }
@@ -174,6 +196,9 @@ export class AnalyzerComponent {
   loading = signal(false);
   animScore = signal(0);
   copied = signal<string>('');
+  suggestions = signal<Company[]>([]);
+  showSuggest = signal(false);
+  activeIdx = signal(-1);
 
   constructor(private api: JobService) {
     // animation du compteur de score
@@ -216,6 +241,28 @@ export class AnalyzerComponent {
   }
   copy(t: string, which: string) { navigator.clipboard?.writeText(t); this.copied.set(which);
     setTimeout(() => this.copied.set(''), 1500); }
+
+  // --- autocomplétion entreprise ---
+  onCompanyInput() {
+    this.suggestions.set(searchCompanies(this.req.company || ''));
+    this.showSuggest.set(true);
+    this.activeIdx.set(-1);
+  }
+  onCompanyKey(e: KeyboardEvent) {
+    const list = this.suggestions();
+    if (!this.showSuggest() || !list.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); this.activeIdx.set((this.activeIdx() + 1) % list.length); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); this.activeIdx.set((this.activeIdx() - 1 + list.length) % list.length); }
+    else if (e.key === 'Enter') { if (this.activeIdx() >= 0) { e.preventDefault(); this.pickCompany(list[this.activeIdx()]); } }
+    else if (e.key === 'Escape') { this.showSuggest.set(false); }
+  }
+  pickCompany(c: Company) {
+    this.req.company = c.name;
+    if (!this.req.location) this.req.location = c.city;
+    this.showSuggest.set(false);
+    this.suggestions.set([]);
+  }
+  closeSuggestionsSoon() { setTimeout(() => this.showSuggest.set(false), 150); }
   fillExample() {
     this.req = { offerText:
       "Alternance Développeur Java/Angular F/H chez JCDecaux à Neuilly-sur-Seine. Au sein de la DSI, " +
