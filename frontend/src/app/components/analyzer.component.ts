@@ -3,12 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JobService } from '../job.service';
 import { AnalysisResult, AnalyzeRequest } from '../models';
-import { Company, searchCompanies } from '../companies';
+import { searchCompanies } from '../companies';
+import { ROLES, CITIES, searchList } from '../suggest-data';
+import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.component';
 
 @Component({
   selector: 'app-analyzer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutocompleteInputComponent],
   template: `
   <div class="grid">
     <section class="card fade-up">
@@ -17,34 +19,15 @@ import { Company, searchCompanies } from '../companies';
         calcule ta compatibilité et rédige ton mot de motivation.</p>
 
       <div class="row">
-        <div class="field ac">
-          <input [(ngModel)]="req.company" placeholder=" " id="cp" autocomplete="off"
-                 (input)="onCompanyInput()" (keydown)="onCompanyKey($event)"
-                 (focus)="onCompanyInput()" (blur)="closeSuggestionsSoon()">
-          <label for="cp">Entreprise @if (detected('company')) { <span class="auto">✨ détecté</span> }</label>
-          @if (suggestions().length && showSuggest()) {
-            <ul class="suggest">
-              @for (c of suggestions(); track c.name; let i = $index) {
-                <li [class.active]="i===activeIdx()" (mousedown)="pickCompany(c)"
-                    (mouseenter)="activeIdx.set(i)">
-                  <span class="s-name">{{ c.name }}</span>
-                  <span class="s-meta">{{ c.sector }} · {{ c.city }}</span>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-        <div class="field">
-          <input [(ngModel)]="req.role" placeholder=" " id="rl">
-          <label for="rl">Poste @if (detected('role')) { <span class="auto">✨ détecté</span> }</label>
-        </div>
+        <app-autocomplete class="cell" label="Entreprise" fieldId="cp" [detected]="detected('company')"
+          [value]="req.company || ''" (valueChange)="req.company=$event" [search]="companySearch" (picked)="onCompanyPick($event)"></app-autocomplete>
+        <app-autocomplete class="cell" label="Poste" fieldId="rl" [detected]="detected('role')"
+          [value]="req.role || ''" (valueChange)="req.role=$event" [search]="roleSearch"></app-autocomplete>
       </div>
       <div class="row">
-        <div class="field">
-          <input [(ngModel)]="req.location" placeholder=" " id="lc">
-          <label for="lc">Lieu @if (detected('location')) { <span class="auto">✨ détecté</span> }</label>
-        </div>
-        <div class="field">
+        <app-autocomplete class="cell" label="Lieu" fieldId="lc" [detected]="detected('location')"
+          [value]="req.location || ''" (valueChange)="req.location=$event" [search]="locationSearch"></app-autocomplete>
+        <div class="cell field">
           <input [(ngModel)]="req.sourceUrl" placeholder=" " id="su">
           <label for="su">Lien de l'offre (optionnel)</label>
         </div>
@@ -123,22 +106,13 @@ import { Company, searchCompanies } from '../companies';
     @media (max-width: 940px){ .grid{ grid-template-columns:1fr; } }
     .row { display:flex; gap:12px; margin-bottom:12px; }
     @media (max-width: 520px){ .row{ flex-direction:column; } }
-    .field { position:relative; flex:1; }
+    .cell { flex:1; min-width:0; }
+    .field { position:relative; }
     .field input { width:100%; padding:15px 13px 7px; border:1px solid var(--border-strong); border-radius:11px;
       background:rgba(9,12,26,.6); color:var(--text); font-size:14px; font-family:inherit; transition:border-color .2s, box-shadow .2s; }
-    .field label { position:absolute; left:13px; top:12px; color:var(--muted-2); font-size:13px; pointer-events:none;
-      transition:.16s ease; }
+    .field label { position:absolute; left:13px; top:12px; color:var(--muted-2); font-size:13px; pointer-events:none; transition:.16s ease; }
     .field input:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,168,255,.15); }
     .field input:focus + label, .field input:not(:placeholder-shown) + label { top:4px; font-size:10.5px; color:var(--blue); }
-    .auto { color:var(--violet); font-weight:700; }
-    .ac { position:relative; }
-    .suggest { position:absolute; z-index:20; top:calc(100% + 4px); left:0; right:0; margin:0; padding:5px;
-      list-style:none; background:#0f1430; border:1px solid var(--border-strong); border-radius:12px;
-      box-shadow:0 22px 50px -18px rgba(0,0,0,.85); max-height:260px; overflow:auto; animation:popIn .16s ease both; }
-    .suggest li { display:flex; flex-direction:column; gap:1px; padding:8px 11px; border-radius:8px; cursor:pointer; }
-    .suggest li.active { background:var(--grad-soft); }
-    .s-name { font-size:13.5px; font-weight:600; color:#eaf0ff; }
-    .s-meta { font-size:11px; color:var(--muted-2); }
     textarea { width:100%; padding:13px; border:1px solid var(--border-strong); border-radius:12px;
       background:rgba(9,12,26,.6); color:var(--text); font-size:14px; font-family:inherit; resize:vertical; transition:border-color .2s, box-shadow .2s; }
     textarea:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,168,255,.13); }
@@ -154,14 +128,12 @@ import { Company, searchCompanies } from '../companies';
     button:disabled { opacity:.6; cursor:default; }
     .hint { margin:12px 0 0; font-size:12.5px; color:var(--blue); cursor:pointer; width:fit-content; }
     .hint:hover { text-decoration:underline; }
-
     .result h4 { margin:20px 0 9px; font-size:14px; color:#cdd4f4; display:flex; align-items:center; gap:8px; }
     .count { background:rgba(79,227,163,.16); color:var(--green); border-radius:20px; padding:1px 9px; font-size:12px; }
     .count.miss { background:rgba(255,184,103,.14); color:var(--orange); }
     .score-head { display:flex; align-items:center; gap:20px; }
     .gauge { width:104px; height:104px; border-radius:50%; display:grid; place-content:center; flex-shrink:0;
-      background: conic-gradient(from -90deg, var(--violet) 0, var(--blue) calc(var(--v)*3.6deg), #222a49 calc(var(--v)*3.6deg));
-      transition: background .1s linear; }
+      background: conic-gradient(from -90deg, var(--violet) 0, var(--blue) calc(var(--v)*3.6deg), #222a49 calc(var(--v)*3.6deg)); transition: background .1s linear; }
     .gauge-inner { width:82px; height:82px; border-radius:50%; background:#0c1024; display:grid; place-content:center; text-align:center; }
     .gauge span { font-size:29px; font-weight:800; color:#fff; }
     .gauge small { color:var(--muted-2); font-size:11px; }
@@ -169,8 +141,7 @@ import { Company, searchCompanies } from '../companies';
     .verdict.hi { color:var(--green); } .verdict.mid { color:var(--blue); }
     .engine { margin:4px 0 0; font-size:11.5px; }
     .detect { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-    .dchip { background:var(--grad-soft); border:1px solid var(--border-strong); color:#c9d2ff; padding:3px 10px;
-      border-radius:16px; font-size:11.5px; }
+    .dchip { background:var(--grad-soft); border:1px solid var(--border-strong); color:#c9d2ff; padding:3px 10px; border-radius:16px; font-size:11.5px; }
     .tags { display:flex; flex-wrap:wrap; gap:7px; }
     .tag { padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:600; }
     .tag.ok { background:rgba(79,227,163,.13); color:var(--green); border:1px solid rgba(79,227,163,.3); }
@@ -178,8 +149,7 @@ import { Company, searchCompanies } from '../companies';
     .ideas { margin-top:14px; }
     .idea-list { display:flex; flex-direction:column; gap:10px; }
     .idea { background:var(--grad-soft); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; }
-    .idea-skill { display:inline-block; background:var(--grad); color:#fff; font-size:11px; font-weight:700;
-      padding:2px 10px; border-radius:14px; margin-bottom:6px; text-transform:capitalize; }
+    .idea-skill { display:inline-block; background:var(--grad); color:#fff; font-size:11px; font-weight:700; padding:2px 10px; border-radius:14px; margin-bottom:6px; text-transform:capitalize; }
     .idea p { margin:0; font-size:13px; line-height:1.55; color:#d7ddf7; }
     .gen { margin-top:18px; }
     .gen-head { display:flex; justify-content:space-between; align-items:center; }
@@ -196,12 +166,14 @@ export class AnalyzerComponent {
   loading = signal(false);
   animScore = signal(0);
   copied = signal<string>('');
-  suggestions = signal<Company[]>([]);
-  showSuggest = signal(false);
-  activeIdx = signal(-1);
+
+  // fonctions de recherche (arrow = 'this' correctement lié)
+  companySearch = (q: string): Suggestion[] =>
+    searchCompanies(q).map(c => ({ label: c.name, meta: `${c.sector} · ${c.city}`, data: c }));
+  roleSearch = (q: string): Suggestion[] => searchList(ROLES, q).map(x => ({ label: x }));
+  locationSearch = (q: string): Suggestion[] => searchList(CITIES, q).map(x => ({ label: x }));
 
   constructor(private api: JobService) {
-    // animation du compteur de score
     effect(() => {
       const r = this.result();
       if (!r) return;
@@ -211,6 +183,10 @@ export class AnalyzerComponent {
         this.animScore.set(cur); requestAnimationFrame(step); };
       this.animScore.set(0); requestAnimationFrame(step);
     });
+  }
+
+  onCompanyPick(s: Suggestion) {
+    if (!this.req.location && s.data?.city) this.req.location = s.data.city;
   }
 
   detected(field: 'company'|'role'|'location') {
@@ -229,7 +205,6 @@ export class AnalyzerComponent {
     this.api.analyze({ ...this.req, save }).subscribe({
       next: r => {
         this.result.set(r); this.loading.set(false);
-        // auto-remplissage des champs vides avec ce qui a été détecté
         if (!this.req.company && r.detectedCompany) this.req.company = r.detectedCompany;
         if (!this.req.role && r.detectedRole) this.req.role = r.detectedRole;
         if (!this.req.location && r.detectedLocation) this.req.location = r.detectedLocation;
@@ -241,28 +216,6 @@ export class AnalyzerComponent {
   }
   copy(t: string, which: string) { navigator.clipboard?.writeText(t); this.copied.set(which);
     setTimeout(() => this.copied.set(''), 1500); }
-
-  // --- autocomplétion entreprise ---
-  onCompanyInput() {
-    this.suggestions.set(searchCompanies(this.req.company || ''));
-    this.showSuggest.set(true);
-    this.activeIdx.set(-1);
-  }
-  onCompanyKey(e: KeyboardEvent) {
-    const list = this.suggestions();
-    if (!this.showSuggest() || !list.length) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); this.activeIdx.set((this.activeIdx() + 1) % list.length); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); this.activeIdx.set((this.activeIdx() - 1 + list.length) % list.length); }
-    else if (e.key === 'Enter') { if (this.activeIdx() >= 0) { e.preventDefault(); this.pickCompany(list[this.activeIdx()]); } }
-    else if (e.key === 'Escape') { this.showSuggest.set(false); }
-  }
-  pickCompany(c: Company) {
-    this.req.company = c.name;
-    if (!this.req.location) this.req.location = c.city;
-    this.showSuggest.set(false);
-    this.suggestions.set([]);
-  }
-  closeSuggestionsSoon() { setTimeout(() => this.showSuggest.set(false), 150); }
   fillExample() {
     this.req = { offerText:
       "Alternance Développeur Java/Angular F/H chez JCDecaux à Neuilly-sur-Seine. Au sein de la DSI, " +
