@@ -10,12 +10,12 @@ import { Stats, STATUS_LABELS } from '../models';
   template: `
   @if (stats(); as s) {
   <div class="cards">
-    <div class="stat"><span class="n">{{ s.total }}</span><span class="l">Candidatures</span></div>
-    <div class="stat"><span class="n">{{ s.averageScore | number:'1.0-0' }}</span><span class="l">Score moyen</span></div>
-    <div class="stat"><span class="n">{{ s.interviews }}</span><span class="l">Entretiens</span></div>
-    <div class="stat"><span class="n">{{ s.offers }}</span><span class="l">Offres reçues</span></div>
+    <div class="stat pop-in"><span class="n">{{ s.total }}</span><span class="l">Candidatures</span></div>
+    <div class="stat pop-in"><span class="n">{{ s.averageScore | number:'1.0-0' }}</span><span class="l">Score moyen</span></div>
+    <div class="stat pop-in"><span class="n">{{ s.interviews }}</span><span class="l">Entretiens</span></div>
+    <div class="stat pop-in"><span class="n">{{ s.offers }}</span><span class="l">Offres reçues</span></div>
   </div>
-  <div class="card">
+  <div class="card fade-up">
     <h3>Répartition par statut</h3>
     <div class="bars">
       @for (row of rows(s); track row.key) {
@@ -32,17 +32,20 @@ import { Stats, STATUS_LABELS } from '../models';
   styles: [`
     .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
     @media (max-width:700px){ .cards{ grid-template-columns:repeat(2,1fr); } }
-    .stat { background:linear-gradient(160deg,#171d38,#12162a); border:1px solid #232a45; border-radius:14px;
-      padding:20px; display:flex; flex-direction:column; gap:6px; }
-    .stat .n { font-size:34px; font-weight:800; background:linear-gradient(135deg,#8a7bff,#4aa8ff);
-      -webkit-background-clip:text; background-clip:text; color:transparent; }
-    .stat .l { color:#9aa3c8; font-size:13px; }
-    .bars { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+    .stat { background:var(--grad-soft); border:1px solid var(--border-strong); border-radius:16px;
+      padding:20px; display:flex; flex-direction:column; gap:6px; transition:transform .15s; }
+    .stat:hover { transform:translateY(-3px); }
+    .stat .n { font-size:36px; font-weight:800; background:linear-gradient(135deg,#a99bff,#4aa8ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent; line-height:1; }
+    .stat .l { color:var(--muted); font-size:13px; }
+    h3 { margin:0 0 4px; font-size:16px; }
+    .bars { display:flex; flex-direction:column; gap:13px; margin-top:12px; }
     .bar-row { display:flex; align-items:center; gap:12px; }
-    .bar-label { width:110px; font-size:13px; color:#c7cef0; }
-    .bar-track { flex:1; height:12px; background:#12162a; border-radius:8px; overflow:hidden; }
-    .bar-fill { height:100%; background:linear-gradient(90deg,#6d5efc,#4aa8ff); border-radius:8px; }
-    .bar-val { width:28px; text-align:right; color:#9aa3c8; font-size:13px; }
+    .bar-label { width:120px; font-size:13px; color:#cdd4f4; }
+    .bar-track { flex:1; height:13px; background:rgba(9,12,26,.7); border-radius:8px; overflow:hidden; }
+    .bar-fill { height:100%; background:var(--grad); border-radius:8px; animation:grow .7s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes grow { from { width:0 !important; } }
+    .bar-val { width:30px; text-align:right; color:var(--muted); font-size:13px; font-weight:700; }
   `]
 })
 export class StatsComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AnalyzerComponent } from './components/analyzer.component';
 import { ApplicationsComponent } from './components/applications.component';
@@ -10,61 +10,64 @@ import { JobService } from './job.service';
   standalone: true,
   imports: [CommonModule, AnalyzerComponent, ApplicationsComponent, StatsComponent],
   template: `
-  <header>
+  <header class="fade-up">
     <div class="brand">
       <div class="logo">✈</div>
       <div>
-        <h1>JobPilot</h1>
+        <h1>Job<span>Pilot</span></h1>
         <p>Assistant intelligent de recherche d'alternance</p>
       </div>
     </div>
     <nav>
       <button [class.on]="tab()==='analyze'" (click)="tab.set('analyze')">Analyser</button>
-      <button [class.on]="tab()==='apps'" (click)="go('apps')">Mes candidatures</button>
-      <button [class.on]="tab()==='stats'" (click)="go('stats')">Statistiques</button>
+      <button [class.on]="tab()==='apps'" (click)="tab.set('apps')">Candidatures</button>
+      <button [class.on]="tab()==='stats'" (click)="tab.set('stats')">Statistiques</button>
     </nav>
   </header>
 
   @if (api.isOffline) {
-    <div class="offline">Mode démo hors-ligne — l'analyse tourne dans ton navigateur.
-      Lance le backend Spring Boot pour la persistance réelle.</div>
+    <div class="offline fade-up">
+      <strong>Mode démo</strong> — l'analyse tourne dans ton navigateur. Lance le backend Spring Boot pour la persistance réelle.
+    </div>
   }
 
   <main>
     @switch (tab()) {
-      @case ('analyze') { <app-analyzer (saved)="onSaved()"></app-analyzer> }
-      @case ('apps') { <app-applications #appsCmp></app-applications> }
+      @case ('analyze') { <app-analyzer (saved)="tab.set('apps')"></app-analyzer> }
+      @case ('apps') { <app-applications></app-applications> }
       @case ('stats') { <app-stats></app-stats> }
     }
   </main>
 
   <footer>
-    <span>Bilal Saaoud · Java · Spring Boot · Angular · Docker</span>
-    <a href="https://github.com/bilalsaaoud/jobpilot" target="_blank" rel="noopener">Code source</a>
+    <span>Bilal Saaoud · Java · Spring Boot · Angular · Docker · IA</span>
+    <a href="https://github.com/bilalsaaoud/jobpilot" target="_blank" rel="noopener">Code source ↗</a>
   </footer>
   `,
   styles: [`
-    :host { display:block; max-width:1080px; margin:0 auto; padding:26px 20px 60px; }
-    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:22px; }
-    .brand { display:flex; align-items:center; gap:14px; }
-    .logo { width:46px; height:46px; border-radius:12px; display:grid; place-content:center; font-size:22px;
-      background:linear-gradient(135deg,#6d5efc,#4aa8ff); }
-    h1 { margin:0; font-size:22px; letter-spacing:.3px; }
-    header p { margin:2px 0 0; color:#9aa3c8; font-size:13px; }
-    nav { display:flex; gap:8px; }
-    nav button { background:#12162a; border:1px solid #232a45; color:#a9b2d6; padding:9px 16px;
-      border-radius:10px; cursor:pointer; font-weight:600; font-size:13.5px; }
-    nav button.on { background:linear-gradient(135deg,#6d5efc,#4aa8ff); color:#fff; border-color:transparent; }
-    .offline { background:rgba(255,200,90,.1); border:1px solid rgba(255,200,90,.3); color:#ffd27f;
-      padding:10px 14px; border-radius:10px; font-size:13px; margin-bottom:18px; }
-    footer { margin-top:30px; display:flex; justify-content:space-between; color:#7f88ad; font-size:12.5px; }
-    footer a { color:#8a9bff; text-decoration:none; }
+    :host { display:block; max-width:1120px; margin:0 auto; padding:30px 22px 70px; }
+    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:18px; margin-bottom:26px; }
+    .brand { display:flex; align-items:center; gap:15px; }
+    .logo { width:50px; height:50px; border-radius:14px; display:grid; place-content:center; font-size:24px; color:#fff;
+      background:var(--grad); box-shadow:0 12px 30px -8px rgba(123,92,255,.7); animation:floaty 4s ease-in-out infinite; }
+    h1 { margin:0; font-size:24px; letter-spacing:.3px; font-weight:800; }
+    h1 span { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    header p { margin:3px 0 0; color:var(--muted); font-size:13px; }
+    nav { display:flex; gap:8px; background:rgba(9,12,26,.5); padding:6px; border-radius:14px; border:1px solid var(--border); }
+    nav button { background:transparent; border:none; color:var(--muted); padding:9px 17px; border-radius:10px;
+      cursor:pointer; font-weight:700; font-size:13.5px; transition:.18s; font-family:inherit; }
+    nav button:hover { color:#fff; }
+    nav button.on { background:var(--grad); color:#fff; box-shadow:0 8px 22px -8px rgba(123,92,255,.6); }
+    .offline { background:linear-gradient(135deg, rgba(255,200,90,.12), rgba(255,150,90,.08));
+      border:1px solid rgba(255,200,90,.28); color:#ffd894; padding:12px 16px; border-radius:12px; font-size:13px; margin-bottom:20px; }
+    .offline strong { color:#ffe6b0; }
+    footer { margin-top:34px; padding-top:18px; border-top:1px solid var(--border); display:flex;
+      justify-content:space-between; flex-wrap:wrap; gap:10px; color:var(--muted-2); font-size:12.5px; }
+    footer a { color:#9fb0ff; text-decoration:none; font-weight:600; }
+    footer a:hover { color:#fff; }
   `]
 })
 export class AppComponent {
   tab = signal<'analyze'|'apps'|'stats'>('analyze');
-  @ViewChild('appsCmp') appsCmp?: ApplicationsComponent;
   constructor(public api: JobService) {}
-  go(t: 'apps'|'stats') { this.tab.set(t); }
-  onSaved() { /* la liste se recharge a l'ouverture de l'onglet */ }
 }

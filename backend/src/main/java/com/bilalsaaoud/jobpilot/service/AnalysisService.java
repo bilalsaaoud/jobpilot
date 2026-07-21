@@ -18,16 +18,29 @@ public class AnalysisService {
     private final CandidateProfile profile;
     private final OpenAiAiClient openAi;
     private final KeywordAiClient keyword;
+    private final OfferParser parser;
+    private final ProjectIdeas projectIdeas;
 
     public AnalysisService(TechDictionary dictionary, CandidateProfile profile,
-                           OpenAiAiClient openAi, KeywordAiClient keyword) {
+                           OpenAiAiClient openAi, KeywordAiClient keyword,
+                           OfferParser parser, ProjectIdeas projectIdeas) {
         this.dictionary = dictionary;
         this.profile = profile;
         this.openAi = openAi;
         this.keyword = keyword;
+        this.parser = parser;
+        this.projectIdeas = projectIdeas;
     }
 
     public AnalysisResult analyze(AnalyzeRequest req) {
+        // 1) detection automatique et remplissage des champs vides
+        OfferParser.Detected det = parser.parse(req.getOfferText());
+        if (isBlank(req.getCompany())) req.setCompany(det.company);
+        if (isBlank(req.getRole())) req.setRole(det.role);
+        if (isBlank(req.getLocation())) req.setLocation(det.location);
+        if (isBlank(req.getContractType())) req.setContractType(det.contractType);
+
+        // 2) comparaison offre / profil
         Set<String> offerSkills = dictionary.extract(req.getOfferText());
         Set<String> mine = profile.skillSet();
         Set<String> learning = profile.learningSet();
@@ -45,6 +58,7 @@ public class AnalysisService {
                 : (int) Math.round(100.0 * weighted / offerSkills.size());
         score = Math.max(0, Math.min(100, score));
 
+        // 3) generation du contenu
         AiClient engine = openAi.isEnabled() ? openAi : keyword;
         GenerationContext ctx = new GenerationContext(
                 profile, req.getCompany(), req.getRole(), score, matched, missing, req.getOfferText());
@@ -58,8 +72,15 @@ public class AnalysisService {
         r.setCoverLetter(gen.coverLetter);
         r.setCvSuggestions(gen.cvSuggestions);
         r.setEngine(gen.engine);
+        r.setDetectedCompany(det.company);
+        r.setDetectedRole(det.role);
+        r.setDetectedLocation(det.location);
+        r.setDetectedContract(det.contractType);
+        r.setProjectIdeas(projectIdeas.forMissing(missing, 4));
         return r;
     }
+
+    private boolean isBlank(String s) { return s == null || s.isBlank(); }
 
     private String verdict(int score) {
         if (score >= 80) return "Excellent match — postule en priorité";

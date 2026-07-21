@@ -29,6 +29,11 @@ export interface AnalysisResult {
   coverLetter: string;
   cvSuggestions: string;
   engine: string;
+  detectedCompany?: string;
+  detectedRole?: string;
+  detectedLocation?: string;
+  detectedContract?: string;
+  projectIdeas: { skill: string; idea: string }[];
 }
 
 export interface JobApplication {

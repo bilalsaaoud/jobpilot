@@ -15,20 +15,19 @@ class AnalysisServiceTest {
         TechDictionary dict = new TechDictionary();
         CandidateProfile profile = new CandidateProfile();
         KeywordAiClient keyword = new KeywordAiClient();
-        // Pas de cle API -> OpenAiAiClient delegue au moteur mots-cles
         OpenAiAiClient openai = new OpenAiAiClient("", "gpt-4o-mini",
                 "https://api.openai.com/v1", keyword);
-        return new AnalysisService(dict, profile, openai, keyword);
+        return new AnalysisService(dict, profile, openai, keyword,
+                new OfferParser(), new ProjectIdeas());
     }
 
     @Test
     void strongOfferGivesHighScoreAndCoverLetter() {
-        AnalysisService s = newService();
         AnalyzeRequest req = new AnalyzeRequest();
         req.setCompany("Sopra Steria");
         req.setRole("Developpeur Java");
         req.setOfferText("Java, Spring Boot, PostgreSQL, REST, JUnit, Docker, CI/CD, Agile Scrum.");
-        AnalysisResult r = s.analyze(req);
+        AnalysisResult r = newService().analyze(req);
 
         assertThat(r.getMatchScore()).isGreaterThanOrEqualTo(80);
         assertThat(r.getMatchedKeywords()).contains("java", "spring boot", "docker");
@@ -37,22 +36,34 @@ class AnalysisServiceTest {
     }
 
     @Test
-    void missingSkillsAppearInGaps() {
-        AnalysisService s = newService();
+    void missingSkillsProduceProjectIdeas() {
         AnalyzeRequest req = new AnalyzeRequest();
         req.setOfferText("Angular, Kafka, Kubernetes, AWS, GraphQL.");
-        AnalysisResult r = s.analyze(req);
+        AnalysisResult r = newService().analyze(req);
 
-        assertThat(r.getMissingKeywords()).contains("graphql");
-        assertThat(r.getMatchScore()).isLessThan(80);
+        assertThat(r.getMissingKeywords()).contains("angular", "kafka");
+        assertThat(r.getProjectIdeas()).isNotEmpty();
+        assertThat(r.getProjectIdeas().get(0)).containsKeys("skill", "idea");
+    }
+
+    @Test
+    void autoDetectsCompanyRoleLocationContract() {
+        AnalyzeRequest req = new AnalyzeRequest();
+        req.setOfferText("Alternance Développeur Java/Angular chez JCDecaux à Neuilly-sur-Seine. "
+                + "Java 17, Spring Boot, Angular.");
+        AnalysisResult r = newService().analyze(req);
+
+        assertThat(r.getDetectedCompany()).isEqualTo("JCDecaux");
+        assertThat(r.getDetectedContract()).isEqualTo("Alternance");
+        assertThat(r.getDetectedLocation()).isEqualTo("Neuilly-sur-Seine");
+        assertThat(r.getDetectedRole()).containsIgnoringCase("Développeur");
     }
 
     @Test
     void emptyOfferGivesNeutralScore() {
-        AnalysisService s = newService();
         AnalyzeRequest req = new AnalyzeRequest();
         req.setOfferText("Personne motivée, curieuse, autonome.");
-        AnalysisResult r = s.analyze(req);
+        AnalysisResult r = newService().analyze(req);
         assertThat(r.getMatchScore()).isEqualTo(50);
     }
 }
