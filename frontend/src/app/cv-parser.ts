@@ -54,3 +54,33 @@ export function detectSkillsFromText(text: string): CvResult {
   }
   return best;
 }
+
+import { getDomain } from './domains';
+import { ideasFor } from './mock-engine';
+
+export interface CvInsights {
+  domainLabel: string;
+  strengths: string[];
+  gaps: string[];
+  ideas: { skill: string; idea: string }[];
+  verdict: string;
+}
+
+/** Donne un avis sur le CV (sans offre) : forces, compétences clés du métier à renforcer, projets à ajouter. */
+export function cvInsights(domain: string, userSkills: string[]): CvInsights {
+  const dom = getDomain(domain);
+  const have = new Set(userSkills.map(s => s.toLowerCase()));
+  const gaps = dom.skills.map(s => s.toLowerCase()).filter(s => !have.has(s)).slice(0, 8);
+  const coverage = dom.skills.length ? Math.round(100 * (dom.skills.length - gaps.length) / dom.skills.length) : 0;
+  let verdict: string;
+  if (userSkills.length >= 12) verdict = 'Profil riche et bien fourni — beau CV !';
+  else if (userSkills.length >= 7) verdict = 'Bon profil — quelques ajouts le rendraient encore plus solide.';
+  else verdict = 'Profil à étoffer — ajoute des compétences et des projets ciblés.';
+  return {
+    domainLabel: dom.label,
+    strengths: userSkills.slice(0, 12),
+    gaps,
+    ideas: ideasFor(gaps, 4),
+    verdict
+  };
+}

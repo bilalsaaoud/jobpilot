@@ -6,7 +6,7 @@ import { AnalysisResult, AnalyzeRequest } from '../models';
 import { searchCompanies } from '../companies';
 import { CITIES, searchList } from '../suggest-data';
 import { DOMAINS, getDomain } from '../domains';
-import { extractTextFromFile, detectSkillsFromText } from '../cv-parser';
+import { extractTextFromFile, detectSkillsFromText, cvInsights, CvInsights } from '../cv-parser';
 import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.component';
 
 @Component({
@@ -48,6 +48,35 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
           [search]="skillSearch" [emitEnter]="true"
           (valueChange)="skillDraft=$event" (picked)="addSkill($event.label)" (submitted)="addSkill($event)"></app-autocomplete>
       </div>
+
+      @if (cvReport(); as cv) {
+      <section class="cv-report card pop-in">
+        <h3>📋 Avis sur ton CV <span class="dom">{{ cv.domainLabel }}</span></h3>
+        <p class="verdict-cv">{{ cv.verdict }}</p>
+
+        <h4>✅ Tes points forts ({{ cv.strengths.length }})</h4>
+        <div class="tags">
+          @for (s of cv.strengths; track s) { <span class="tag ok">{{ s }}</span> }
+        </div>
+
+        @if (cv.gaps.length) {
+          <h4>📈 À renforcer pour ce métier</h4>
+          <div class="tags">
+            @for (g of cv.gaps; track g) { <span class="tag miss">{{ g }}</span> }
+          </div>
+        }
+
+        @if (cv.ideas.length) {
+          <h4>💡 Projets à ajouter pour muscler ton CV</h4>
+          <div class="idea-list">
+            @for (p of cv.ideas; track p.skill) {
+              <div class="idea"><span class="idea-skill">{{ p.skill }}</span><p>{{ p.idea }}</p></div>
+            }
+          </div>
+        }
+        <p class="cv-hint">👉 Colle une offre ci-dessous pour une analyse ciblée sur un poste précis.</p>
+      </section>
+      }
 
       <div class="row">
         <app-autocomplete class="cell" label="Entreprise" fieldId="cp" [detected]="detected('company')"
@@ -157,6 +186,12 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
     .cv-btn:disabled { opacity:.6; cursor:default; }
     .cv-msg { background:var(--grad-soft); border:1px solid var(--border-strong); color:#c9d2ff;
       border-radius:10px; padding:8px 12px; font-size:12.5px; margin-bottom:10px; }
+    .cv-report { margin-bottom:16px; }
+    .cv-report h3 { margin:0 0 4px; font-size:16px; display:flex; align-items:center; gap:8px; }
+    .cv-report h3 .dom { background:var(--grad); color:#fff; font-size:11px; font-weight:700; padding:2px 10px; border-radius:14px; }
+    .cv-report h4 { margin:14px 0 8px; font-size:13.5px; color:#cdd4f4; }
+    .verdict-cv { margin:0; font-size:13px; color:var(--blue); font-weight:600; }
+    .cv-hint { margin:14px 0 0; font-size:12.5px; color:var(--muted); }
     .sk-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
     .sk { background:rgba(79,227,163,.13); color:var(--green); border:1px solid rgba(79,227,163,.3);
       padding:4px 10px; border-radius:16px; font-size:12px; font-weight:600; text-transform:capitalize; }
@@ -228,6 +263,7 @@ export class AnalyzerComponent {
   skillDraft = '';
   cvLoading = signal(false);
   cvMsg = signal<string>('');
+  cvReport = signal<CvInsights | null>(null);
 
   // fonctions de recherche (arrow = 'this' correctement lié)
   companySearch = (q: string): Suggestion[] =>
@@ -246,7 +282,7 @@ export class AnalyzerComponent {
     this.userSkills.set([...getDomain(id).profileSkills]);
     this.req.role = '';
   }
-  resetSkills() { this.userSkills.set([...getDomain(this.domain()).profileSkills]); this.cvMsg.set(''); }
+  resetSkills() { this.userSkills.set([...getDomain(this.domain()).profileSkills]); this.cvMsg.set(''); this.cvReport.set(null); }
 
   async onCvUpload(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -263,6 +299,7 @@ export class AnalyzerComponent {
         this.userSkills.set(res.skills);
         const label = getDomain(res.domain).label;
         this.cvMsg.set(`✨ ${res.skills.length} compétences détectées et remplies depuis ton CV (domaine : ${label}).`);
+        this.cvReport.set(cvInsights(res.domain, res.skills));
       }
     } catch {
       this.cvMsg.set("Impossible de lire ce fichier. Essaie un PDF avec du texte sélectionnable, ou un .txt.");

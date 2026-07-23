@@ -111,7 +111,7 @@ export function mockParse(text: string): Detected {
   return d;
 }
 
-function ideasFor(missing: string[], limit: number): { skill: string; idea: string }[] {
+export function ideasFor(missing: string[], limit: number): { skill: string; idea: string }[] {
   return missing.slice(0, limit).map(skill => ({
     skill,
     idea: IDEAS[skill] ?? `Mets en avant ${skill} : suis une courte formation gratuite ou cite une expérience où tu l'as utilisé — même à petite échelle, ça compte.`
