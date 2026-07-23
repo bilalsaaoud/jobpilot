@@ -52,26 +52,43 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
 
       @if (cvReport(); as cv) {
       <section class="cv-report card pop-in">
-        <h3>📋 Avis sur ton CV <span class="dom">{{ cv.domainLabel }}</span></h3>
-        <p class="verdict-cv">{{ cv.verdict }}</p>
+        <div class="cvr-head">
+          <div class="cvr-ring" [style.--v]="cv.coverage">
+            <div class="cvr-ring-in"><span>{{ cv.coverage }}<small>%</small></span><em>couvert</em></div>
+          </div>
+          <div class="cvr-head-txt">
+            <h3>Avis sur ton CV <span class="dom">{{ cv.domainLabel }}</span></h3>
+            <p class="verdict-cv">{{ cv.verdict }}</p>
+            <div class="cvr-mini">
+              <span class="mini ok">✅ {{ cv.strengths.length }} atouts</span>
+              <span class="mini miss">📈 {{ cv.gaps.length }} à renforcer</span>
+            </div>
+          </div>
+        </div>
 
-        <h4>✅ Tes points forts ({{ cv.strengths.length }})</h4>
+        <h4 class="cvr-h">💪 Tes points forts</h4>
         <div class="tags">
-          @for (s of cv.strengths; track s) { <span class="tag ok">{{ s }}</span> }
+          @for (s of cv.strengths; track s) { <span class="tag ok pop-in">{{ s }}</span> }
         </div>
 
         @if (cv.gaps.length) {
-          <h4>📈 À renforcer pour ce métier</h4>
+          <h4 class="cvr-h">📈 À renforcer pour ce métier</h4>
           <div class="tags">
-            @for (g of cv.gaps; track g) { <span class="tag miss">{{ g }}</span> }
+            @for (g of cv.gaps; track g) { <span class="tag miss pop-in">{{ g }}</span> }
           </div>
         }
 
         @if (cv.ideas.length) {
-          <h4>💡 Projets à ajouter pour muscler ton CV</h4>
-          <div class="idea-list">
-            @for (p of cv.ideas; track p.skill) {
-              <div class="idea"><span class="idea-skill">{{ p.skill }}</span><p>{{ p.idea }}</p></div>
+          <h4 class="cvr-h">🚀 Ta feuille de route projets</h4>
+          <div class="roadmap">
+            @for (p of cv.ideas; track p.skill; let i = $index) {
+              <div class="rm-step pop-in" [style.animation-delay.ms]="i*90">
+                <div class="rm-node">{{ i + 1 }}</div>
+                <div class="rm-card">
+                  <div class="rm-top"><span class="rm-skill">{{ p.skill }}</span><span class="rm-badge">Projet suggéré</span></div>
+                  <p>{{ p.idea }}</p>
+                </div>
+              </div>
             }
           </div>
         }
@@ -137,12 +154,15 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
 
       @if (r.projectIdeas.length) {
       <div class="ideas">
-        <h4>💡 Idées de mini-projets pour combler tes lacunes</h4>
-        <div class="idea-list">
-          @for (p of r.projectIdeas; track p.skill) {
-            <div class="idea">
-              <span class="idea-skill">{{ p.skill }}</span>
-              <p>{{ p.idea }}</p>
+        <h4>🚀 Feuille de route — projets pour combler tes lacunes</h4>
+        <div class="roadmap">
+          @for (p of r.projectIdeas; track p.skill; let i = $index) {
+            <div class="rm-step pop-in" [style.animation-delay.ms]="i*90">
+              <div class="rm-node">{{ i + 1 }}</div>
+              <div class="rm-card">
+                <div class="rm-top"><span class="rm-skill">{{ p.skill }}</span><span class="rm-badge">Projet suggéré</span></div>
+                <p>{{ p.idea }}</p>
+              </div>
             </div>
           }
         </div>
@@ -193,12 +213,44 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
     .cv-btn:disabled { opacity:.6; cursor:default; }
     .cv-msg { background:var(--grad-soft); border:1px solid var(--border-strong); color:#c9d2ff;
       border-radius:10px; padding:8px 12px; font-size:12.5px; margin-bottom:10px; }
-    .cv-report { margin-bottom:16px; }
-    .cv-report h3 { margin:0 0 4px; font-size:16px; display:flex; align-items:center; gap:8px; }
-    .cv-report h3 .dom { background:var(--grad); color:#fff; font-size:11px; font-weight:700; padding:2px 10px; border-radius:14px; }
-    .cv-report h4 { margin:14px 0 8px; font-size:13.5px; color:#cdd4f4; }
-    .verdict-cv { margin:0; font-size:13px; color:var(--blue); font-weight:600; }
-    .cv-hint { margin:14px 0 0; font-size:12.5px; color:var(--muted); }
+    .cv-report { margin-bottom:16px; background:linear-gradient(165deg, rgba(30,26,66,.6), rgba(16,21,42,.5)); }
+    .cvr-head { display:flex; align-items:center; gap:18px; margin-bottom:6px; }
+    .cvr-ring { width:92px; height:92px; border-radius:50%; flex-shrink:0; display:grid; place-content:center; position:relative;
+      background: conic-gradient(from -90deg, var(--violet) 0, var(--blue) calc(var(--v)*3.6deg), rgba(255,255,255,.07) calc(var(--v)*3.6deg));
+      animation:glowRing 3s ease-in-out infinite; }
+    @keyframes glowRing { 0%,100%{ filter:drop-shadow(0 0 6px rgba(123,92,255,.4)); } 50%{ filter:drop-shadow(0 0 16px rgba(74,168,255,.6)); } }
+    .cvr-ring-in { width:72px; height:72px; border-radius:50%; background:#0b0f22; display:grid; place-content:center; text-align:center; }
+    .cvr-ring-in span { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:#fff; }
+    .cvr-ring-in span small { font-size:12px; color:var(--muted); }
+    .cvr-ring-in em { font-style:normal; font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--muted-2); }
+    .cvr-head-txt h3 { margin:0 0 4px; font-size:17px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .cvr-head-txt .dom { background:var(--grad); color:#fff; font-size:11px; font-weight:700; padding:2px 10px; border-radius:14px; }
+    .verdict-cv { margin:0 0 8px; font-size:13px; color:var(--blue); font-weight:600; }
+    .cvr-mini { display:flex; gap:8px; flex-wrap:wrap; }
+    .cvr-mini .mini { font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:20px; }
+    .cvr-mini .ok { background:rgba(79,227,163,.14); color:var(--green); }
+    .cvr-mini .miss { background:rgba(255,184,103,.14); color:var(--orange); }
+    .cvr-h { margin:18px 0 10px; font-size:13.5px; color:#cdd4f4; font-family:'Space Grotesk',sans-serif; }
+    .cv-hint { margin:16px 0 0; font-size:12.5px; color:var(--muted); padding-top:12px; border-top:1px dashed var(--border); }
+
+    /* Roadmap / feuille de route projets */
+    .roadmap { display:flex; flex-direction:column; gap:12px; position:relative; padding-left:6px; }
+    .rm-step { display:flex; gap:14px; position:relative; }
+    .rm-step:not(:last-child)::before { content:''; position:absolute; left:15px; top:34px; bottom:-14px; width:2px;
+      background:linear-gradient(var(--violet), rgba(74,168,255,.25)); }
+    .rm-node { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:grid; place-content:center;
+      font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; color:#fff; background:var(--grad); z-index:1;
+      box-shadow:0 8px 20px -8px rgba(123,92,255,.8); }
+    .rm-card { flex:1; background:rgba(9,12,26,.6); border:1px solid var(--border-strong); border-radius:14px;
+      padding:13px 15px; transition:transform .15s, border-color .2s; position:relative; overflow:hidden; }
+    .rm-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--grad); }
+    .rm-card:hover { transform:translateX(3px); border-color:var(--violet); }
+    .rm-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; flex-wrap:wrap; }
+    .rm-skill { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13.5px; color:#fff; text-transform:capitalize;
+      background:var(--grad-soft); border:1px solid var(--border-strong); padding:3px 11px; border-radius:16px; }
+    .rm-badge { font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#b7b0ff;
+      background:rgba(139,123,255,.14); padding:3px 9px; border-radius:12px; }
+    .rm-card p { margin:0; font-size:12.8px; line-height:1.55; color:#d7ddf7; }
     .sk-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
     .sk { background:rgba(79,227,163,.13); color:var(--green); border:1px solid rgba(79,227,163,.3);
       padding:4px 10px; border-radius:16px; font-size:12px; font-weight:600; text-transform:capitalize; }

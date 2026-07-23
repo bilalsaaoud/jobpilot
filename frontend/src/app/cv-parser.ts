@@ -64,6 +64,7 @@ export interface CvInsights {
   gaps: string[];
   ideas: { skill: string; idea: string }[];
   verdict: string;
+  coverage: number;
 }
 
 /** Donne un avis sur le CV (sans offre) : forces, compétences clés du métier à renforcer, projets à ajouter. */
@@ -81,6 +82,7 @@ export function cvInsights(domain: string, userSkills: string[]): CvInsights {
     strengths: userSkills.slice(0, 12),
     gaps,
     ideas: ideasFor(gaps, 4),
-    verdict
+    verdict,
+    coverage
   };
 }
