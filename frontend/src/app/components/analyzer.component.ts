@@ -6,6 +6,7 @@ import { AnalysisResult, AnalyzeRequest } from '../models';
 import { searchCompanies } from '../companies';
 import { CITIES, searchList } from '../suggest-data';
 import { DOMAINS, getDomain } from '../domains';
+import { extractTextFromFile, detectSkillsFromText } from '../cv-parser';
 import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.component';
 
 @Component({
@@ -29,8 +30,14 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
       <div class="skills-box">
         <div class="sk-head">
           <span>Mes compétences <small>({{ userSkills().length }})</small></span>
-          <button class="reset" (click)="resetSkills()">Réinitialiser</button>
+          <div class="sk-actions">
+            <button class="cv-btn" (click)="cvInput.click()" [disabled]="cvLoading()">
+              {{ cvLoading() ? '⏳ Lecture…' : '📄 Déposer mon CV' }}</button>
+            <button class="reset" (click)="resetSkills()">Réinitialiser</button>
+          </div>
+          <input #cvInput type="file" accept=".pdf,.txt" hidden (change)="onCvUpload($event)">
         </div>
+        @if (cvMsg()) { <div class="cv-msg">{{ cvMsg() }}</div> }
         <div class="sk-tags">
           @for (s of userSkills(); track s) {
             <span class="sk">{{ s }} <b (click)="removeSkill(s)">×</b></span>
@@ -140,9 +147,16 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
     .skills-box { background:rgba(9,12,26,.4); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:16px; }
     .sk-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:13px; color:#cdd4f4; font-weight:600; }
     .sk-head small { color:var(--muted-2); font-weight:400; }
+    .sk-actions { display:flex; gap:8px; align-items:center; }
     .reset { background:transparent; border:1px solid var(--border-strong); color:var(--muted); border-radius:8px;
       padding:4px 10px; font-size:11.5px; cursor:pointer; font-family:inherit; }
     .reset:hover { color:#fff; }
+    .cv-btn { background:var(--grad); color:#fff; border:none; border-radius:8px; padding:5px 12px;
+      font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; box-shadow:0 6px 16px -8px rgba(123,92,255,.7); }
+    .cv-btn:hover { filter:brightness(1.08); }
+    .cv-btn:disabled { opacity:.6; cursor:default; }
+    .cv-msg { background:var(--grad-soft); border:1px solid var(--border-strong); color:#c9d2ff;
+      border-radius:10px; padding:8px 12px; font-size:12.5px; margin-bottom:10px; }
     .sk-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
     .sk { background:rgba(79,227,163,.13); color:var(--green); border:1px solid rgba(79,227,163,.3);
       padding:4px 10px; border-radius:16px; font-size:12px; font-weight:600; text-transform:capitalize; }
@@ -212,6 +226,8 @@ export class AnalyzerComponent {
   domain = signal<string>('informatique');
   userSkills = signal<string[]>(getDomain('informatique').profileSkills);
   skillDraft = '';
+  cvLoading = signal(false);
+  cvMsg = signal<string>('');
 
   // fonctions de recherche (arrow = 'this' correctement lié)
   companySearch = (q: string): Suggestion[] =>
@@ -230,7 +246,31 @@ export class AnalyzerComponent {
     this.userSkills.set([...getDomain(id).profileSkills]);
     this.req.role = '';
   }
-  resetSkills() { this.userSkills.set([...getDomain(this.domain()).profileSkills]); }
+  resetSkills() { this.userSkills.set([...getDomain(this.domain()).profileSkills]); this.cvMsg.set(''); }
+
+  async onCvUpload(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.cvLoading.set(true); this.cvMsg.set('');
+    try {
+      const text = await extractTextFromFile(file);
+      const res = detectSkillsFromText(text);
+      if (!res.skills.length) {
+        this.cvMsg.set("Aucune compétence reconnue dans ce CV. Ajoute-les à la main ou vérifie le fichier.");
+      } else {
+        this.domain.set(res.domain);
+        this.userSkills.set(res.skills);
+        const label = getDomain(res.domain).label;
+        this.cvMsg.set(`✨ ${res.skills.length} compétences détectées et remplies depuis ton CV (domaine : ${label}).`);
+      }
+    } catch {
+      this.cvMsg.set("Impossible de lire ce fichier. Essaie un PDF avec du texte sélectionnable, ou un .txt.");
+    } finally {
+      this.cvLoading.set(false);
+      input.value = '';
+    }
+  }
   addSkill(s: string) {
     const v = s.trim(); if (!v) return;
     if (!this.userSkills().some(x => x.toLowerCase() === v.toLowerCase()))
