@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, signal, effect } from '@angular/core';
+import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JobService } from '../job.service';
@@ -375,16 +375,15 @@ export class AnalyzerComponent {
   }
   removeSkill(s: string) { this.userSkills.set(this.userSkills().filter(x => x !== s)); }
 
-  constructor(private api: JobService) {
-    effect(() => {
-      const r = this.result();
-      if (!r) return;
-      const target = r.matchScore; let cur = 0;
-      const step = () => { cur += Math.max(1, Math.ceil((target - cur) / 6));
-        if (cur >= target) { this.animScore.set(target); return; }
-        this.animScore.set(cur); requestAnimationFrame(step); };
-      this.animScore.set(0); requestAnimationFrame(step);
-    });
+  constructor(private api: JobService) {}
+
+  private animateScore(target: number) {
+    let cur = 0; this.animScore.set(0);
+    const id = setInterval(() => {
+      cur += Math.max(1, Math.ceil((target - cur) / 6));
+      if (cur >= target) { this.animScore.set(target); clearInterval(id); }
+      else this.animScore.set(cur);
+    }, 28);
   }
 
   onCompanyPick(s: Suggestion) {
@@ -406,7 +405,7 @@ export class AnalyzerComponent {
     this.loading.set(true);
     this.api.analyze({ ...this.req, save, domain: this.domain(), userSkills: this.userSkills() }).subscribe({
       next: r => {
-        this.result.set(r); this.loading.set(false);
+        this.result.set(r); this.loading.set(false); this.animateScore(r.matchScore);
         if (!this.req.company && r.detectedCompany) this.req.company = r.detectedCompany;
         if (!this.req.role && r.detectedRole) this.req.role = r.detectedRole;
         if (!this.req.location && r.detectedLocation) this.req.location = r.detectedLocation;
