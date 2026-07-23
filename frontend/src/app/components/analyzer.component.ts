@@ -20,6 +20,7 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
       <p class="muted">Choisis ton domaine, colle une annonce : JobPilot détecte l'entreprise et le poste,
         calcule ta compatibilité et rédige ton mot de motivation. Fonctionne pour tous les métiers.</p>
 
+      <div class="step-label"><span class="num">1</span> Ton profil</div>
       <div class="domains">
         @for (d of domains; track d.id) {
           <button class="dom" [class.on]="domain()===d.id" (click)="setDomain(d.id)">
@@ -78,6 +79,7 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
       </section>
       }
 
+      <div class="step-label"><span class="num">2</span> L'offre à analyser</div>
       <div class="row">
         <app-autocomplete class="cell" label="Entreprise" fieldId="cp" [detected]="detected('company')"
           [value]="req.company || ''" (valueChange)="req.company=$event" [search]="companySearch" (picked)="onCompanyPick($event)"></app-autocomplete>
@@ -164,6 +166,11 @@ import { AutocompleteInputComponent, Suggestion } from './autocomplete-input.com
   styles: [`
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start; }
     @media (max-width: 940px){ .grid{ grid-template-columns:1fr; } }
+    .step-label { display:flex; align-items:center; gap:9px; font-family:'Space Grotesk',sans-serif; font-weight:600;
+      font-size:13px; letter-spacing:.5px; text-transform:uppercase; color:#aeb8e0; margin:20px 0 12px; }
+    .step-label .num { width:22px; height:22px; border-radius:7px; display:grid; place-content:center; font-size:12px;
+      color:#fff; background:var(--grad); box-shadow:0 6px 14px -6px rgba(123,92,255,.7); }
+    .step-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border-strong),transparent); }
     .row { display:flex; gap:12px; margin-bottom:12px; }
     @media (max-width: 520px){ .row{ flex-direction:column; } }
     .cell { flex:1; min-width:0; }
